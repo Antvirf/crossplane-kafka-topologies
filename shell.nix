@@ -8,6 +8,7 @@ pkgs.mkShellNoCC {
     kubectl
     k3d
     k9s
+    kubernetes-helm
   ];
 shellHook = ''
 '';

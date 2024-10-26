@@ -1,0 +1,42 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: kafkakewl-topology
+  labels:
+    provider: kafka
+    tool: kafkakewl
+spec:
+  compositeTypeRef:
+    apiVersion: kafkakewl.aviitala.com/v1
+    kind: ClusterWideTopology
+  mode: Pipeline
+  pipeline:
+    - step: build-kafka-topics
+      functionRef:
+        name: crossplane-contrib-function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ range .observed.composite.resource.spec.topics }}
+            ---
+            apiVersion: topic.kafka.crossplane.io/v1alpha1
+            kind: Topic
+            metadata:
+              annotations:
+                crossplane.io/external-name: {{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ .name }}
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ .name }}
+            spec:
+              forProvider:
+                replicationFactor: 1
+                partitions: 1
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.kafkaProviderConfigRef }}
+            {{ end }}
+    - functionRef:
+        name: function-auto-ready
+      step: automatically-detect-ready-composed-resources
+  publishConnectionDetailsWithStoreConfigRef:
+    name: default

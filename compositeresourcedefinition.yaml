@@ -1,0 +1,60 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  annotations:
+  name: clusterwidetopologies.kafkakewl.aviitala.com
+spec:
+  group: kafkakewl.aviitala.com
+  names:
+    kind: ClusterWideTopology
+    plural: clusterwidetopologies
+  claimNames:
+    kind: Topology
+    plural: topologies
+  versions:
+    - name: v1
+      referenceable: true
+      served: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              properties:
+                applications:
+                  items:
+                    properties:
+                      name:
+                        type: string
+                      type:
+                        type: string
+                      user:
+                        type: string
+                    type: object
+                  type: array
+                kafkaNamespace:
+                  type: string
+                kafkaProviderConfigRef:
+                  type: string
+                relationships:
+                  items:
+                    properties:
+                      object:
+                        type: string
+                      relationshipType:
+                        type: string
+                      subject:
+                        type: string
+                    type: object
+                  type: array
+                topics:
+                  items:
+                    properties:
+                      name:
+                        type: string
+                    type: object
+                  type: array
+              required:
+                - kafkaProviderConfigRef
+                - kafkaNamespace
+              type: object
+          type: object

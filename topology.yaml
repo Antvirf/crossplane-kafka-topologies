@@ -1,0 +1,27 @@
+---
+apiVersion: kafkakewl.aviitala.com/v1
+kind: Topology # namespace-scoped
+metadata:
+  name: test-topology
+  namespace: default
+  annotations:
+    aviitala.com/team: team-a
+    aviitala.com/environment: production
+spec:
+  kafkaProviderConfigRef: mycluster # A Kafka Provider must have been configured that provides this cluster
+  kafkaNamespace: team-a # Prefix attached to all topics, e.g. '$NAMESPACE.$TOPICNAME'
+  topics: # Creates/manages topics
+    - name: myTopic
+    - name: anotherTopic
+  applications: # Effectively, metadata for ACLs
+    - name: superAppBeta
+      user: superAppBetaConsumerUser
+      type: consumerGroup
+    - name: prototypeAlpha
+  relationships: # Used to create ACLs
+    - subject: superAppBeta
+      relationshipType: produces
+      object: myTopic
+    - subject: prototypeAlpha
+      relationshipType: consumes
+      object: myTopic

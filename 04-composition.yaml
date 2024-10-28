@@ -27,7 +27,7 @@ spec:
             metadata:
               annotations:
                 crossplane.io/external-name: {{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ .name }}
-                gotemplating.fn.crossplane.io/composition-resource-name: {{ .name }}
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ .name }}
             spec:
               forProvider:
                 replicationFactor: 1
@@ -35,8 +35,66 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.kafkaProviderConfigRef }}
             {{ end }}
-    - functionRef:
-        name: function-auto-ready
-      step: automatically-detect-ready-composed-resources
+    - step: build-kafka-acls
+      functionRef:
+        name: crossplane-contrib-function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ range $relationship := .observed.composite.resource.spec.relationships }}
+            {{ range $topic := $relationship.consumes }}
+            {{ range $perm := list "Read" "Describe" }}
+            ---
+            apiVersion: acl.kafka.crossplane.io/v1alpha1
+            kind: AccessControlList
+            metadata:
+              annotations:
+                #crossplane.io/external-name: "{{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ $relationship.principalName }}-consumes-{{ $topic }}-{{ $perm }}"
+                gotemplating.fn.crossplane.io/composition-resource-name: "{{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ $relationship.principalName }}-consumes-{{ $topic }}-{{ $perm }}"
+            spec:
+              forProvider:
+                resourceName: {{ $relationship.principalName }}-consumes-topic-{{ $perm }}
+                resourceType: "Topic"
+                resourcePrincipal: "User:{{ $relationship.principalName }}"
+                resourceHost: "{{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ $topic }}"
+                resourceOperation: "{{ $perm }}"
+                resourcePermissionType: "Allow"
+                resourcePatternTypeFilter: "Literal"
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.kafkaProviderConfigRef }}
+            {{ end }}
+            {{ end }}
+
+
+            {{ range $topic := $relationship.produces }}
+            {{ range $perm := list "Read" "Describe" "Write" "IdempotentWrite" }}
+            ---
+            apiVersion: acl.kafka.crossplane.io/v1alpha1
+            kind: AccessControlList
+            metadata:
+              annotations:
+                #crossplane.io/external-name: "{{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ $relationship.principalName }}-produces-{{ $topic }}-{{ $perm }}"
+                gotemplating.fn.crossplane.io/composition-resource-name: "{{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ $relationship.principalName }}-produces-{{ $topic }}-{{ $perm }}"
+            spec:
+              forProvider:
+                resourceName: {{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ $relationship.principalName }}-produces-topic-{{ $perm }}
+                resourceType: "Topic"
+                resourcePrincipal: "User:{{ $relationship.principalName }}"
+                resourceHost: "{{ $.observed.composite.resource.spec.kafkaNamespace }}.{{ $topic }}"
+                resourceOperation: "{{ $perm }}"
+                resourcePermissionType: "Allow"
+                resourcePatternTypeFilter: "Literal"
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.kafkaProviderConfigRef }}
+            {{ end }}
+            {{ end }}
+
+            {{ end }}
+    #- functionRef:
+    #   name: function-auto-ready
+    #  step: automatically-detect-ready-composed-resources
   publishConnectionDetailsWithStoreConfigRef:
     name: default

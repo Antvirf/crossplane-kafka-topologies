@@ -1,7 +1,6 @@
-# Kafkakewl-like management of 'Kafka Topologies' using Crossplane
+# Declarative management of 'Kafka Topologies' using Crossplane
 
-Like Kafkakewl, but using Crossplane and its Kafka provider to manage creation of Kafka 'topologies' using Kubernetes CRDs.
-
+Like [Kafkakewl](https://github.com/MarshallWace/kafkakewl/tree/legacy-main), but using [Crossplane](https://github.com/crossplane/crossplane) and its Kafka provider to **declaratively administer and maintain** Kafka 'topologies' using Kubernetes CRDs. Does not implement any of the imperative actions supported by Kafkakewl (e.g. recreations of topics), and does not implement RBAC (since this would be managed in Git/k8s) or metrics (since this is a minimal POC).
 
 ## To-do
 
@@ -19,7 +18,7 @@ k3d cluster create test
 # install crossplane with helm  https://docs.crossplane.io/latest/software/install/#install-crossplane
 helm repo add crossplane-stable https://charts.crossplane.io/stable
 helm repo update
-helm install crossplane --namespace crossplane-system --create-namespace crossplane-stable/crossplane 
+helm install crossplane --namespace sys-crossplane --create-namespace crossplane-stable/crossplane --wait
 
 # install Kafka provider and required functions
 kubectl apply -f ./01-crossplane-providers-and-packages.yaml
@@ -35,7 +34,7 @@ cat <<EOF > secret.json
 EOF
 
 # create secret
-kubectl -n crossplane-system create secret generic kafka-creds --from-file=credentials=secret.json
+kubectl -n sys-crossplane create secret generic kafka-creds --from-file=credentials=secret.json
 
 # apply Kafka provider config
 kubectl apply -f ./02-kafka-providerconfig.yaml

@@ -19,9 +19,11 @@ spec:
       type: consumerGroup
     - name: prototypeAlpha
   relationships: # Used to create ACLs
-    - subject: superAppBeta
-      relationshipType: produces
-      object: myTopic
-    - subject: prototypeAlpha
-      relationshipType: consumes
-      object: myTopic
+    - principalName: superAppBeta
+      produces:
+        - myTopic
+    - principalName: prototypeAlpha
+      consumes:
+        - myTopic
+      produces:
+        - anotherTopic

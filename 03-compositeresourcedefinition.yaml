@@ -36,16 +36,22 @@ spec:
                 kafkaProviderConfigRef:
                   type: string
                 relationships:
-                  items:
-                    properties:
-                      object:
-                        type: string
-                      relationshipType:
-                        type: string
-                      subject:
-                        type: string
-                    type: object
                   type: array
+                  items:
+                    type: object
+                    properties:
+                      principalName:
+                        type: string
+                      consumes:
+                        type: array
+                        items:
+                          type: string
+                      produces:
+                        type: array
+                        items:
+                          type: string
+                    required:
+                      - principalName
                 topics:
                   items:
                     properties:

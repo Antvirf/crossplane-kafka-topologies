@@ -5,11 +5,9 @@ Like Kafkakewl, but using Crossplane and its Kafka provider to manage creation o
 
 ## To-do
 
-- Review at all resources KafkaKewl creates, complete todo for resources to manage
-  Topics
-  ACLs
-  ...users? groups? offsets?
-- Add management of ACLs, as derived from applications and relationships
+- Figure out proper principals and prefixes for relationships to see if it all works well
+- Add test scripts to fetch ACLs and Topics to show functionality
+- Fix ACLs not getting to 'ready' state, despite being synced
 
 
 ## Test setup

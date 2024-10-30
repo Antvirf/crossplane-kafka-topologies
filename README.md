@@ -1,13 +1,16 @@
-# Declarative management of 'Kafka Topologies' using Crossplane
+# POC: Declarative management of 'Kafka Topologies' using Crossplane
 
-Like [Kafkakewl](https://github.com/MarshallWace/kafkakewl/tree/legacy-main), but using [Crossplane](https://github.com/crossplane/crossplane) and its Kafka provider to **declaratively administer and maintain** Kafka 'topologies' using Kubernetes CRDs. Does not implement any of the imperative actions supported by Kafkakewl (e.g. recreations of topics), and does not implement RBAC (since this would be managed in Git/k8s) or metrics (since this is a minimal POC).
+Like [Kafkakewl](https://github.com/MarshallWace/kafkakewl/tree/legacy-main), but using [Crossplane](https://github.com/crossplane/crossplane) and its Kafka provider to **declaratively administer and maintain** Kafka 'topologies' using Kubernetes CRDs. Does not implement any of the imperative actions supported by Kafkakewl (e.g. recreations of topics), and does not implement in-cluster RBAC (since this would be managed in Git/k8s) or metrics (since this is a minimal POC). Coverage of complicated parts of ACL functionalities (see functions defined [here](https://github.com/MarshallWace/kafkakewl/blob/legacy-main/kewl-kafkacluster-processor/src/main/scala/com/mwam/kafkakewl/processor/kafkacluster/deployment/KafkaClusterItems.scala)) is missing.
 
-## To-do
+## Further work to make this operational
 
-- Figure out proper principals and prefixes for relationships to see if it all works well
-- Add test scripts to fetch ACLs and Topics to show functionality
-- Fix ACLs not getting to 'ready' state, despite being synced
-
+- Implementation of additional ACL patterns, like:
+  - Developer access of predefined level (`full/readonly`) applied to an array of developer users
+  - ACL pattern requirements for common tools: Kafka streams, Confluent Replicator
+  - ACL patterns for cross-namespace/cross-manifest access and how this is managed
+- Testing setup: Likely a combination of bash scripts, using `crossplane` CLI to render manifests which can then be validated with `yq`.
+- Fix ACLs not getting their state set to 'ready', despite being synced to Kafka
+- Explore how to improve the experience of working on this, perhaps (a) split composition into multiple manifests; (b) define the Go template in a separate file as Crossplane should support this for sure; (c) explore other 'nicer' templating functions/libraries available for Crossplane
 
 ## Test setup
 
@@ -24,7 +27,8 @@ helm install crossplane --namespace sys-crossplane --create-namespace crossplane
 kubectl apply -f ./01-crossplane-providers-and-packages.yaml
 
 # following Kafka provider setup, create a secret https://github.com/crossplane-contrib/provider-kafka
-# update the IP/port below for your setup. Add auth arguments as per the docs if relevant.
+# your cluster must be able to resolve/reach the brokers.
+# update the IP/port below for your setup. Add auth arguments as per the Kafka provider docs if relevant.
 cat <<EOF > secret.json
 {
   "brokers": [
@@ -48,7 +52,7 @@ kubectl apply -f ./04-composition.yaml
 # create sample topolgoy
 kubectl apply -f ./topology.yaml
 
-# get topologies - at this point, if all is synced/ready, go check Kafka that topics are there. To troubleshoot, view k8s events
+# get topologies - at this point, if all is synced/ready, go check Kafka that topics are there. To troubleshoot, view k8s events.
 kubectl get topologies --all-namespaces
 
 # cleanup - delete the Topology and its topics. Go check Kafka afterwards to check topics were deleted.
